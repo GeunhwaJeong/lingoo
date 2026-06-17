@@ -1,0 +1,20 @@
+{
+  "name": "lingoo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "lingoo — a clean, ad-light language exchange app (iOS / Android / Web)",
+  "packageManager": "pnpm@10.23.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "mobile": "pnpm --filter @lingoo/mobile start",
+    "ios": "pnpm --filter @lingoo/mobile ios",
+    "android": "pnpm --filter @lingoo/mobile android",
+    "web": "pnpm --filter @lingoo/mobile web",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "supabase": "^2.107.0"
+  }
+}

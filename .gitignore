@@ -1,0 +1,26 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# expo / react-native
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+ios/
+android/
+
+# env & secrets
+.env
+.env.local
+*.local
+
+# supabase
+supabase/.branches/
+supabase/.temp/
+
+# os / editor
+.DS_Store
+*.log
+.idea/
+.vscode/

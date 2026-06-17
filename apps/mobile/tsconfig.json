@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "moduleResolution": "Bundler",
+    "baseUrl": ".",
+    "paths": {
+      "#/*": ["./src/*"],
+      "@lingoo/shared": ["../../packages/shared/src/index.ts"]
+    }
+  },
+  "include": ["src", "App.tsx", "app.config.ts", "index.js"]
+}
