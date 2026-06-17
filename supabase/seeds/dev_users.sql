@@ -36,6 +36,19 @@ update public.profiles set display_name = 'Liam',  interests = '{gaming,tech}'  
 update public.profiles set display_name = 'Sofía', interests = '{food,travel}'   where id = '44444444-4444-4444-4444-444444444444';
 update public.profiles set display_name = 'Me',    interests = '{travel,music}'  where id = '55555555-5555-5555-5555-555555555555';
 
+-- GoTrue scans these token columns as non-null strings; raw inserts leave them
+-- NULL, which makes login fail with "Database error querying schema". Set ''.
+update auth.users set
+  confirmation_token         = coalesce(confirmation_token, ''),
+  recovery_token             = coalesce(recovery_token, ''),
+  email_change               = coalesce(email_change, ''),
+  email_change_token_new     = coalesce(email_change_token_new, ''),
+  email_change_token_current = coalesce(email_change_token_current, ''),
+  phone_change               = coalesce(phone_change, ''),
+  phone_change_token         = coalesce(phone_change_token, ''),
+  reauthentication_token     = coalesce(reauthentication_token, '')
+where email like '%@demo.dev';
+
 -- Demo users skip onboarding (column added in 0005).
 update public.profiles set onboarded = true
 where id in (

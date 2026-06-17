@@ -69,6 +69,26 @@ export function WelcomeScreen() {
         <Text variant="caption" muted style={[a.text_center, {marginTop: tokens.space.sm}]}>
           By continuing you agree to be kind to your language partners.
         </Text>
+
+        {/* Dev-only shortcut: log in instantly as a seeded demo account. */}
+        {__DEV__ && (
+          <View style={[a.gap_sm, {marginTop: tokens.space.xl}]}>
+            <Text variant="caption" muted style={a.text_center}>
+              — dev only —
+            </Text>
+            <Button
+              label="Enter as demo (me@demo.dev)"
+              variant="secondary"
+              onPress={async () => {
+                const {error} = await supabase.auth.signInWithPassword({
+                  email: 'me@demo.dev',
+                  password: 'password123',
+                })
+                if (error) Alert.alert('Demo login failed', error.message)
+              }}
+            />
+          </View>
+        )}
       </View>
     </SafeAreaView>
   )
