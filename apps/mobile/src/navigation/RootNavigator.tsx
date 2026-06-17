@@ -11,10 +11,12 @@ import {ActivityIndicator, View} from 'react-native'
 
 import {useTheme} from '#/alf'
 import {useAuth} from '#/lib/auth'
+import {useMyProfile} from '#/lib/queries'
 import {type RootStackParamList, type TabParamList} from '#/navigation/types'
 import {ChatsScreen} from '#/screens/ChatsScreen'
 import {ConversationScreen} from '#/screens/ConversationScreen'
 import {DiscoverScreen} from '#/screens/DiscoverScreen'
+import {OnboardingScreen} from '#/screens/OnboardingScreen'
 import {ProfileScreen} from '#/screens/ProfileScreen'
 import {WelcomeScreen} from '#/screens/WelcomeScreen'
 
@@ -38,15 +40,32 @@ function MainTabs() {
   )
 }
 
+function Loading() {
+  const t = useTheme()
+  return (
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: t.palette.bg}}>
+      <ActivityIndicator color={t.palette.primary} />
+    </View>
+  )
+}
+
 export function RootNavigator() {
   const t = useTheme()
   const {session, initializing} = useAuth()
+  // Only fetch the profile once we know there's a session.
+  const {data: profile, isLoading: profileLoading} = useMyProfile(!!session)
 
-  if (initializing) {
+  if (initializing) return <Loading />
+
+  // Signed in but profile not loaded yet.
+  if (session && profileLoading) return <Loading />
+
+  // Signed in but hasn't finished onboarding.
+  if (session && profile && !profile.onboarded) {
     return (
-      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: t.palette.bg}}>
-        <ActivityIndicator color={t.palette.primary} />
-      </View>
+      <NavigationContainer theme={t.name === 'dark' ? DarkTheme : DefaultTheme}>
+        <OnboardingScreen />
+      </NavigationContainer>
     )
   }
 

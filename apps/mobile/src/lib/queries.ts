@@ -5,8 +5,12 @@
 import {
   type Conversation,
   type Correction,
+  type Language,
+  type LearningLanguage,
   type MatchCandidate,
   type Message,
+  type NativeLanguage,
+  type ProficiencyLevel,
   type ProfileSummary,
 } from '@lingoo/shared'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
@@ -50,6 +54,133 @@ function rowToCandidate(r: CandidateRow): MatchCandidate {
       learningLanguages: (r.learning_languages ?? []) as ProfileSummary['learningLanguages'],
     },
   }
+}
+
+// ---------------------------------------------------------------------------
+// Reference data + my profile
+// ---------------------------------------------------------------------------
+
+export function useLanguages() {
+  return useQuery({
+    queryKey: ['languages'],
+    staleTime: Infinity,
+    queryFn: async (): Promise<Language[]> => {
+      const {data, error} = await supabase
+        .from('languages')
+        .select('code, name, native_name, is_rtl')
+        .order('name')
+      if (error) throw error
+      return (data as {code: string; name: string; native_name: string; is_rtl: boolean}[]).map(l => ({
+        code: l.code,
+        name: l.name,
+        nativeName: l.native_name,
+        isRtl: l.is_rtl,
+      }))
+    },
+  })
+}
+
+export interface MyProfile {
+  id: string
+  displayName: string
+  bio: string | null
+  countryCode: string | null
+  interests: string[]
+  nativeLanguages: NativeLanguage[]
+  learningLanguages: LearningLanguage[]
+  onboarded: boolean
+}
+
+export function useMyProfile(enabled = true) {
+  return useQuery({
+    queryKey: ['myProfile'],
+    enabled,
+    queryFn: async (): Promise<MyProfile> => {
+      const me = await currentUserId()
+      const {data, error} = await supabase
+        .from('profiles')
+        .select(
+          'id, display_name, bio, country_code, interests, onboarded,' +
+            ' profile_native_languages(language_code),' +
+            ' profile_learning_languages(language_code, level)',
+        )
+        .eq('id', me)
+        .single()
+      if (error) throw error
+      const row = data as unknown as {
+        id: string
+        display_name: string
+        bio: string | null
+        country_code: string | null
+        interests: string[] | null
+        onboarded: boolean
+        profile_native_languages: {language_code: string}[]
+        profile_learning_languages: {language_code: string; level: ProficiencyLevel}[]
+      }
+      return {
+        id: row.id,
+        displayName: row.display_name,
+        bio: row.bio,
+        countryCode: row.country_code,
+        interests: row.interests ?? [],
+        onboarded: row.onboarded,
+        nativeLanguages: row.profile_native_languages.map(l => ({code: l.language_code})),
+        learningLanguages: row.profile_learning_languages.map(l => ({code: l.language_code, level: l.level})),
+      }
+    },
+  })
+}
+
+export interface OnboardingInput {
+  displayName: string
+  bio: string
+  countryCode: string
+  interests: string[]
+  nativeLanguages: string[]
+  learningLanguages: {code: string; level: ProficiencyLevel}[]
+}
+
+/** Save the onboarding form: profile fields + language sets, then flag done. */
+export function useSaveOnboarding() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: OnboardingInput) => {
+      const me = await currentUserId()
+
+      const {error: pErr} = await supabase
+        .from('profiles')
+        .update({
+          display_name: input.displayName,
+          bio: input.bio || null,
+          country_code: input.countryCode || null,
+          interests: input.interests,
+          onboarded: true,
+        })
+        .eq('id', me)
+      if (pErr) throw pErr
+
+      // Replace language sets (delete-then-insert keeps it idempotent).
+      await supabase.from('profile_native_languages').delete().eq('profile_id', me)
+      await supabase.from('profile_learning_languages').delete().eq('profile_id', me)
+
+      if (input.nativeLanguages.length) {
+        const {error} = await supabase
+          .from('profile_native_languages')
+          .insert(input.nativeLanguages.map(code => ({profile_id: me, language_code: code})))
+        if (error) throw error
+      }
+      if (input.learningLanguages.length) {
+        const {error} = await supabase
+          .from('profile_learning_languages')
+          .insert(input.learningLanguages.map(l => ({profile_id: me, language_code: l.code, level: l.level})))
+        if (error) throw error
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({queryKey: ['myProfile']})
+      qc.invalidateQueries({queryKey: ['matchCandidates']})
+    },
+  })
 }
 
 // ---------------------------------------------------------------------------

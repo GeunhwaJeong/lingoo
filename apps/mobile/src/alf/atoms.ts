@@ -38,9 +38,11 @@ export const atoms = StyleSheet.create({
   p_xl: {padding: space.xl},
   px_md: {paddingHorizontal: space.md},
   px_lg: {paddingHorizontal: space.lg},
+  px_xl: {paddingHorizontal: space.xl},
   py_sm: {paddingVertical: space.sm},
   py_md: {paddingVertical: space.md},
   py_lg: {paddingVertical: space.lg},
+  py_xl: {paddingVertical: space.xl},
 
   // margin
   mt_sm: {marginTop: space.sm},

@@ -36,6 +36,16 @@ update public.profiles set display_name = 'Liam',  interests = '{gaming,tech}'  
 update public.profiles set display_name = 'Sofía', interests = '{food,travel}'   where id = '44444444-4444-4444-4444-444444444444';
 update public.profiles set display_name = 'Me',    interests = '{travel,music}'  where id = '55555555-5555-5555-5555-555555555555';
 
+-- Demo users skip onboarding (column added in 0005).
+update public.profiles set onboarded = true
+where id in (
+  '11111111-1111-1111-1111-111111111111',
+  '22222222-2222-2222-2222-222222222222',
+  '33333333-3333-3333-3333-333333333333',
+  '44444444-4444-4444-4444-444444444444',
+  '55555555-5555-5555-5555-555555555555'
+);
+
 -- Native languages
 insert into public.profile_native_languages (profile_id, language_code) values
   ('11111111-1111-1111-1111-111111111111', 'en'),
